@@ -3,8 +3,9 @@ title: "csr_in_india_data_analysis"
 author: "Onkar Singh"
 date: "11/13/2021"
 output:
-  pdf_document: default
   html_document: default
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -90,7 +91,7 @@ g1 <- state %>%
        title = "Total CSR Spend by States", subtitle = "combined total from FY14-15 to FY20-21", 
        caption = "data: MCA, India, graph:os2137@caa.columbia.edu") 
   
-
+g1
 
   plotly::ggplotly(g1)
 
@@ -103,6 +104,7 @@ g1 <- state %>%
 ## Per State per FY csr spend
 ```{r}
 g <- state %>%
+  filter(amount_inr_crores >= 500) %>% 
   # mutate(financial_year = fct_relevel(
   #   financial_year,
   #   c(
@@ -115,22 +117,33 @@ g <- state %>%
   #     "FY20-21"
   #   )
 mutate(financial_year = as.factor(financial_year))%>%
-  
+  mutate(financial_year = forcats::fct_rev(financial_year)) %>% 
   mutate(state_ut = fct_reorder(state_ut, amount_inr_crores)) %>%
-  ggplot(aes(y = financial_year, x = amount_inr_crores, fill = forcats::fct_rev(financial_year))) +
-  geom_col(position = "dodge") +
+  ggplot(aes(y = state_ut, x = amount_inr_crores, fill = financial_year)) +
+  geom_col() +
+  facet_wrap(~financial_year)+
 geom_text(aes(label = round(amount_inr_crores,0)), size = 2, hjust = 0, vjust = 0.5) +
-  facet_wrap(~state_ut)+
 
-scale_fill_discrete(guide=guide_legend(reverse=T))
+scale_fill_discrete(guide=guide_legend(reverse=T)) +
 #   reference: https://stackoverflow.com/questions/38425908/reverse-stacking-order-without-affecting-legend-order-in-ggplot2-bar-charts 
-# or +  guides(fill = guide_legend(reverse = TRUE)) 
+# or +  guides(fill = guide_legend(reverse = TRUE)) +
+theme(legend.position = "none") +
+  labs(x = "Amount in INR Crores", 
+       y = "State/Pan India", 
+       title = "States with highest CSR Spend from 2014-15 to FY2020-21(INR Crores)",
+       subtitle = "States where the total spend was INR 500 crores or more in a FY (1 Crore = 10 Million)", 
+       caption = "Data: Min. of Corp. Affair, India")
 
+g
 
-# plotly::ggplotly(g)
+plotly::ggplotly(g)
   
   # levels(as.factor(state$financial_year))
+
+
 ```
+
+
 
 
 ```{r}
@@ -150,14 +163,14 @@ geom_text(aes(label = total_investment_inr_crores), size = 2, hjust = 0)
 ```{r}
 sector %>% 
   group_by(sector) %>% 
-  summarize(avg_investment_inr_crores = mean(amount_inr_crores, na.rm = T)) %>% 
+  summarize(total_investment_inr_crores = sum(amount_inr_crores, na.rm = T)) %>% 
   mutate(sector =
-           fct_reorder(sector, avg_investment_inr_crores)) %>%
-  mutate(avg_investment_inr_crores = round(avg_investment_inr_crores, 0)) %>% 
-          ggplot(aes(x = avg_investment_inr_crores, y = sector)) +
+           fct_reorder(sector, total_investment_inr_crores)) %>%
+  mutate(total_investment_inr_crores = round(total_investment_inr_crores, 0)) %>% 
+          ggplot(aes(x = total_investment_inr_crores, y = sector)) +
   geom_col(fill = "purple") +
   
-  geom_text(aes(label = avg_investment_inr_crores), size = 2, hjust = 0, vjust = 0.5) 
+  geom_text(aes(label = total_investment_inr_crores), size = 2, hjust = 0, vjust = 0.5) 
 ```
 
 
@@ -175,6 +188,42 @@ g <- sector %>%
   
 
 plotly::ggplotly(g)
+```
+
+
+```{r}
+g3 <- sector %>%
+  filter(amount_inr_crores >= 500) %>% 
+  # mutate(financial_year = fct_relevel(
+  #   financial_year,
+  #   c(
+  #     "FY14-15",
+  #     "FY15-16",
+  #     "FY16-17",
+  #     "FY17-18",
+  #     "FY18-19",
+  #     "FY19-20",
+  #     "FY20-21"
+  #   )
+mutate(financial_year = as.factor(financial_year))%>%
+  mutate(financial_year = forcats::fct_rev(financial_year)) %>% 
+  mutate(state_ut = fct_reorder(sector, amount_inr_crores)) %>%
+  ggplot(aes(y = sector, x = amount_inr_crores, fill = financial_year)) +
+  geom_col() +
+  facet_wrap(~financial_year)+
+geom_text(aes(label = round(amount_inr_crores,0)), size = 2, hjust = 0, vjust = 0.5) +
+
+scale_fill_discrete(guide=guide_legend(reverse=T)) +
+#   reference: https://stackoverflow.com/questions/38425908/reverse-stacking-order-without-affecting-legend-order-in-ggplot2-bar-charts 
+# or +  guides(fill = guide_legend(reverse = TRUE)) +
+theme(legend.position = "none") +
+  labs(x = "Amount in INR Crores", 
+       y = "State/Pan India", 
+       title = "Sector with highest CSR Spend from 2014-15 to FY2020-21(INR Crores)",
+       subtitle = "Sector where the total spend was INR 500 crores or more in a FY (1 Crore = 10 Million)", 
+       caption = "Data: Min. of Corp. Affair, India")
+
+g3
 ```
 
 ```{r}
@@ -238,8 +287,47 @@ final_psu_non_psu %>%
     ggrepel::geom_text_repel(aes(label = round(amount_spent_inr_crores,0)), size = 1.5, color = "black", hjust = 1)+
   labs(x = "Financial_Year",
        y = "Amount_Spent_in_INR_Crores", 
-       title = "Amount of CSR spend by private(NON PSU) and public(PSU) companies in India", 
-       subtitle = "from 2014-2015 to 2020-2021",
-       caption = "data:MCA,India, graph:os2137@caa.columbia.edu") 
+       title = "CSR spend by private(NON PSU) and public(PSU) companies in India", 
+       subtitle = "from 2014-2015 to 2020-202 (size of dots are proportional to number of Private and Public \n Companies, figures in blue represent no. of companies and figures in black represent INR crores)",
+       caption = "Data:MCA,India") 
 ```
+
+## Impact of Covid19 Pandemic on the CSR Spend
+
+The Covid19 severely impacted the businesses all over the world and India was no exception.The drastic reduction in CSR spend from FY19-FY20 to FY20-21 tells the pain caused by the pandemic. This also led to severe reduction  in the corporate profitability and as a result, a larger number of companies didn't spend any money on CSR in FY20-21. As we know by now that Job losses and fear of the pandemic lead to mass migration from cities to rural areas. One can only hope that widespread  vaccination drives and signs of economic recovery will lead to v shaped recovery in the CSR spend as well. 
+
+```{r}
+final_psu_non_psu %>% 
+  filter(fy %in% c("2019to2020","2020to2021")) %>% 
+  ggplot(aes(x = fy, y = amount_spent_inr_crores, fill = psu_non_psu))+
+  geom_col(position = "dodge", width =  0.5) +
+  facet_wrap(~psu_non_psu, scales = "free_y")+
+  
+    geom_text(aes(label = round(amount_spent_inr_crores,0)), size = 2.5, color = "black", hjust = 0, vjust = 1, fontface = "bold")+
+  labs(x = "Financial_Year",
+       y = "Amount_Spent_in_INR_Crores", 
+       title = "CSR spend by private(NON PSU) and public(PSU) companies ", 
+       subtitle = "FY19-20 vs FY20-21)",
+       caption = "Data:MCA,India") 
+```
+
+
+```{r}
+final_psu_non_psu %>% 
+  filter(fy %in% c("2019to2020","2020to2021")) %>% 
+  ggplot(aes(x = fy, y = number_of_comapanies, fill = psu_non_psu))+
+  geom_col(position = "dodge", width =  0.5) +
+  facet_wrap(vars(psu_non_psu), scales ="free_y")+
+  
+    geom_text(aes(label = number_of_comapanies), size = 2.5, color = "black", hjust = 0, vjust = 1, fontface = "bold")+
+  labs(x = "Financial_Year",
+       y = "Number of Comapanies", 
+       title = "Number of private(NON PSU) and public(PSU) companies engaged in CSR ", 
+       subtitle = "FY19-20 vs FY20-21)",
+       caption = "Data:MCA,India") 
+  
+```
+
+
+
 
