@@ -49,7 +49,7 @@ sector <- readxl::read_excel("CSR_Data_Development_Sector_Wise.xlsx", range = "A
 ```
 
 
-###  Per FY FY14 to FY21
+### CSR Spend  Per FY FY14-15 to FY20-21
 ```{r}
 sector %>% 
   group_by(financial_year) %>% 
@@ -59,7 +59,14 @@ sector %>%
 state %>% 
   group_by(financial_year) %>% 
   summarize(total_csr_spend_per_fy =  sum(amount_inr_crores)) %>% 
-   mutate(total_csr_spend_per_fy = round(total_csr_spend_per_fy, 0))
+   mutate(total_csr_spend_per_fy = round(total_csr_spend_per_fy, 0)) %>% 
+  ggplot(aes(financial_year, total_csr_spend_per_fy)) +
+  geom_col(width =  0.4,fill = "purple")+
+  geom_text(aes(label = total_csr_spend_per_fy),  size = 3, vjust = -0.4)+
+ labs(y= "Spend per FY (INR Crores)",
+      x= "Financial Year", 
+     title = "Total CSR Spend per FY in INR Crores", 
+      subtitle = "from FY14-15 to FY20-21 (1Crore = 10 Million)")
 ```
 
 
@@ -100,6 +107,22 @@ g1
 
 ```
 
+## CSR Spend Cumulative FY14-15 to FY20-21: Top 10 States
+```{r}
+state %>% 
+  group_by(state_ut) %>% 
+  summarize(total_state_inr_crores = sum(amount_inr_crores)) %>% 
+  arrange(desc(total_state_inr_crores)) %>% 
+  head(10) %>% 
+  mutate(state_ut = fct_reorder(state_ut, total_state_inr_crores)) %>% 
+  ggplot(aes(y = state_ut, x = total_state_inr_crores)) +
+  geom_col(fill = "purple") + 
+  geom_text(aes(label = round(total_state_inr_crores,0)), size = 2, hjust = 0, fontface = "bold") +
+  labs(y = "States/Pan India", 
+       x = "Total spend in crores(INR)", 
+       title = "Top 10 States by CSR Spend", subtitle = "combined total from FY14-15 to FY20-21", 
+       caption = "data: MCA, India, graph:os2137@caa.columbia.edu") 
+```
 
 ## Per State per FY csr spend
 ```{r}
@@ -172,6 +195,27 @@ sector %>%
   
   geom_text(aes(label = total_investment_inr_crores), size = 2, hjust = 0, vjust = 0.5) 
 ```
+## CSR Spend Cumulative FY14-15 to FY20-21: Top 10 Sectors
+
+```{r}
+sector %>% 
+  group_by(sector) %>% 
+  summarize(total_investment_inr_crores = sum(amount_inr_crores, na.rm = T)) %>% 
+  arrange(desc(total_investment_inr_crores)) %>% 
+  head(10) %>% 
+            
+  mutate(sector =
+           fct_reorder(sector, total_investment_inr_crores)) %>%
+  mutate(total_investment_inr_crores = round(total_investment_inr_crores, 0)) %>% 
+          ggplot(aes(x = total_investment_inr_crores, y = sector)) +
+  geom_col(fill = "purple") +
+  
+  geom_text(aes(label = total_investment_inr_crores), size = 2, hjust = 0, vjust = 0.5) +
+  labs(y = "Sectors", 
+       x = "Total spend in crores(INR)", 
+       title = "Top 10 Sectors by CSR Spend", subtitle = "combined total from FY14-15 to FY20-21", 
+       caption = "data: Minstry of Corp. Affairs, India, graph:os2137@caa.columbia.edu") 
+```
 
 
 
@@ -221,7 +265,7 @@ theme(legend.position = "none") +
        y = "State/Pan India", 
        title = "Sector with highest CSR Spend from 2014-15 to FY2020-21(INR Crores)",
        subtitle = "Sector where the total spend was INR 500 crores or more in a FY (1 Crore = 10 Million)", 
-       caption = "Data: Min. of Corp. Affair, India")
+       caption = "Data: Min. of Corp. Affairs, India")
 
 g3
 ```
@@ -235,20 +279,20 @@ psu_non_psu <- readxl::read_excel("CSR_Data_PSU_Non_PSU_wise.xlsx", range = "A2:
 names(psu_non_psu)
 dim(psu_non_psu)
 new_names <- c("psu_non_psu", 
-               "comp_2014to2015", 
-               "spendinrcrores_2014to2015",
-               "comp_2015to2016", 
-               "spendinrcrores_2015to2016",
-               "comp_2016to2017", 
-               "spendinrcrores_2016to2017",
-               "comp_2017to2018", 
-               "spendinrcrores_2017to2018",
-               "comp_2018to2019", 
-               "spendinrcrores_2018to2019",
-               "comp_2019to2020", 
-               "spendinrcrores_2019to2020",
-               "comp_2020to2021", 
-               "spendinrcrores_2020to2021"
+               "comp_2014-2015", 
+               "spendinrcrores_2014-2015",
+               "comp_2015-2016", 
+               "spendinrcrores_2015-2016",
+               "comp_2016-2017", 
+               "spendinrcrores_2016-2017",
+               "comp_2017-2018", 
+               "spendinrcrores_2017-2018",
+               "comp_2018-2019", 
+               "spendinrcrores_2018-2019",
+               "comp_2019-2020", 
+               "spendinrcrores_2019-2020",
+               "comp_2020-2021", 
+               "spendinrcrores_2020-2021"
                )
 ```
 
@@ -256,7 +300,7 @@ new_names <- c("psu_non_psu",
 psu_non_psu <- psu_non_psu %>% set_names(new_names)
 psu_non_psu_1 <- psu_non_psu %>% 
   select(1, 2,4,6,8,10,12,14) %>% 
-    pivot_longer(cols = c(comp_2014to2015: comp_2020to2021), 
+    pivot_longer(cols = c("comp_2014-2015": "comp_2020-2021"), 
 names_to = "company_fy", 
 values_to = "number_of_comapanies") %>% 
   separate(company_fy, c("company", "fy"), sep = "_", extra = "merge") 
@@ -266,7 +310,7 @@ values_to = "number_of_comapanies") %>%
 ```{r}
 psu_non_psu_2 <- psu_non_psu %>%  
   select(1, 3, 5, 7, 9, 11, 13, 15) %>% 
- pivot_longer( cols = c(spendinrcrores_2014to2015:spendinrcrores_2020to2021), 
+ pivot_longer( cols = c("spendinrcrores_2014-2015":"spendinrcrores_2020-2021"), 
 names_to = "company_fy", 
 values_to = "amount_spent_inr_crores") %>% 
   separate(company_fy, c("company", "fy"), sep = "_", extra = "merge") 
@@ -281,15 +325,20 @@ final_psu_non_psu <- psu_non_psu_1 %>%
 
 ```{r}
 final_psu_non_psu %>% 
-  ggplot(aes(x = fy, y = amount_spent_inr_crores, color = psu_non_psu, size = number_of_comapanies))+
+  ggplot(aes(x = fy, y = amount_spent_inr_crores, color = psu_non_psu), size = amount_spent_inr_crores)+
   geom_point() +
-    ggrepel::geom_text_repel(aes(label = number_of_comapanies), size = 1.5, color = "blue", hjust = 0)+
-    ggrepel::geom_text_repel(aes(label = round(amount_spent_inr_crores,0)), size = 1.5, color = "black", hjust = 1)+
+  geom_line(group = 1)+
+  facet_wrap(~psu_non_psu)+
+  
+    ggrepel::geom_text_repel(aes(label = number_of_comapanies), size = 1.5, color = "blue",  hjust = 0)+
+    ggrepel::geom_text_repel(aes(label = round(amount_spent_inr_crores,0)), color = "black", size = 1.5,  hjust = 1)+
   labs(x = "Financial_Year",
-       y = "Amount_Spent_in_INR_Crores", 
+       y = "Amount Spent in INR Crores", 
        title = "CSR spend by private(NON PSU) and public(PSU) companies in India", 
        subtitle = "from 2014-2015 to 2020-202 (size of dots are proportional to number of Private and Public \n Companies, figures in blue represent no. of companies and figures in black represent INR crores)",
-       caption = "Data:MCA,India") 
+       caption = "Data:MCA,India", 
+       fill = "Company Type") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
 ## Impact of Covid19 Pandemic on the CSR Spend
@@ -298,23 +347,25 @@ The Covid19 severely impacted the businesses all over the world and India was no
 
 ```{r}
 final_psu_non_psu %>% 
-  filter(fy %in% c("2019to2020","2020to2021")) %>% 
+  filter(fy %in% c("2019-2020","2020-2021")) %>% 
   ggplot(aes(x = fy, y = amount_spent_inr_crores, fill = psu_non_psu))+
   geom_col(position = "dodge", width =  0.5) +
   facet_wrap(~psu_non_psu, scales = "free_y")+
   
     geom_text(aes(label = round(amount_spent_inr_crores,0)), size = 2.5, color = "black", hjust = 0, vjust = 1, fontface = "bold")+
   labs(x = "Financial_Year",
-       y = "Amount_Spent_in_INR_Crores", 
+       y = "Amount Spentin INR Crores", 
        title = "CSR spend by private(NON PSU) and public(PSU) companies ", 
-       subtitle = "FY19-20 vs FY20-21)",
-       caption = "Data:MCA,India") 
+       subtitle = "(FY19-20 vs FY20-21)",
+       caption = "Data:MCA,India", 
+       fill = "Company Type") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
 
 ```{r}
 final_psu_non_psu %>% 
-  filter(fy %in% c("2019to2020","2020to2021")) %>% 
+  filter(fy %in% c("2019-2020","2020-2021")) %>% 
   ggplot(aes(x = fy, y = number_of_comapanies, fill = psu_non_psu))+
   geom_col(position = "dodge", width =  0.5) +
   facet_wrap(vars(psu_non_psu), scales ="free_y")+
@@ -323,10 +374,17 @@ final_psu_non_psu %>%
   labs(x = "Financial_Year",
        y = "Number of Comapanies", 
        title = "Number of private(NON PSU) and public(PSU) companies engaged in CSR ", 
-       subtitle = "FY19-20 vs FY20-21)",
-       caption = "Data:MCA,India") 
+       subtitle = "(FY19-20 vs FY20-21)",
+       caption = "Data:MCA,India", 
+       fill = "Company Type") +
+  theme(axis.text.x = element_text(angle = 90))
   
 ```
+
+## Top 10 companies with CSR Spend
+
+
+
 
 
 
